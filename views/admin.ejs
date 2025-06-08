@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Panel</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+</head>
+<body class="bg-gray-50 min-h-screen">
+<%- include('partials/nav') %>
+
+<div class="bg-gray-100 min-h-screen flex">
+    <button id="toggleSidebar" class=" hidden md:hidden p-4 absolute z-50 top-0 left-0 text-xl сursor-pointer">☰</button>
+
+    <!-- Контейнер сайдбара -->
+    <aside id="sidebar" class="fixed top-0 md:static transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out w-64 bg-white border-r min-h-screen p-6 space-y-4 z-40">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Админ панель</h2>
+        <nav class="space-y-2">
+            <button onclick="switchTab('stats', event)" class="tab-button w-full text-left px-4 py-2 rounded hover:bg-gray-200">📊 Статистика</button>
+            <button onclick="switchTab('users', event)" class="tab-button w-full text-left px-4 py-2 rounded hover:bg-gray-200">👤 Пользователи</button>
+            <button onclick="switchTab('projects', event)" class="tab-button w-full text-left px-4 py-2 rounded hover:bg-gray-200">📁 Проекты</button>
+            <button onclick="switchTab('logs', event)" class="tab-button w-full text-left px-4 py-2 rounded hover:bg-gray-200">📜 Логи</button>
+            <button onclick="switchTab('team', event)" class="tab-button w-full text-left px-4 py-2 rounded hover:bg-gray-200">👥 Команда</button>
+        </nav>
+    </aside>
+
+    <!-- Основной контент, панель -->
+    <main class="flex-1 p-4 md:p-6 pt-6 md:pt-6">
+        <h1 class="text-3xl font-bold mb-8 text-gray-800">Панель администратора</h1>
+
+        <!-- Раздел со статистикой и последними регистрациями -->
+        <div id="tab-stats" class="tab-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">👤 Всего пользователей</h2>
+                    <p class="text-3xl text-blue-600 font-semibold"><%= stats.totalUsers %></p>
+                </div>
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-2">📁 Всего проектов</h2>
+                    <p class="text-3xl text-blue-600 font-semibold"><%= stats.totalProjects %></p>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">🆕 Последние регистрации:</h3>
+                <ul class="list-disc pl-5 text-gray-700 space-y-1">
+                    <% stats.recentUsers.forEach(u => { %>
+                        <li><%= u.name %> — <%= new Date(new Date(u.created_at).getTime() + 3 * 60 * 60 * 1000).toLocaleString() %></li>
+                    <% }) %>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Раздел с юзерами -->
+        <div id="tab-users" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row gap-2 justify-start h-10">
+                <input type="text" id="userSearchInput" placeholder="Поиск пользователей..."
+                       class="border px-3 py-2 rounded w-64" />
+
+                <button onclick="openUserModal()" class="bg-green-500 text-white px-4 py-2 w-64 rounded hover:bg-green-600">
+                    ➕ Создать пользователя
+                </button>
+                <% if (created) { %>
+                    <div id="successMessage" class="bg-green-100 text-green-800 px-4 py-2 rounded border border-green-300 text-center">
+                        ✅ Пользователь успешно создан!
+                    </div>
+                <% } %>
+            </div>
+
+            <div id="userList" class="pt-9 sm:pt-0 space-y-6">
+                <% users.forEach(user => { %>
+                    <div class="bg-white shadow-lg rounded-lg p-4 user-card">
+                        <div class="grid md:grid-cols-[2rem_3rem_auto_1fr_auto_1fr_1fr_auto_auto_auto] gap-3 items-center">
+                            <div class="text-gray-500 font-mono">#<%= user.id %></div>
+                            <img src="<%= user.avatar || '/uploads/default-avatar-hq.png' %>" alt="avatar" class="w-12 h-12 rounded border">
+                            <form action="/admin/user/update/<%= user.id %>" method="POST" class="contents">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input name="name" value="<%= user.name %>" class="border p-2 rounded w-52" placeholder="Имя" />
+                                <input name="bio" value="<%= user.bio %>" class="border p-2 rounded w-full" placeholder="О себе" />
+                                <select name="role" class="border p-2 rounded w-52">
+                                    <option value="1" <%= user.role === 1 ? 'selected' : '' %>>Student</option>
+                                    <option value="3" <%= user.role === 3 ? 'selected' : '' %>>Teacher</option>
+                                    <option value="2" <%= user.role === 2 ? 'selected' : '' %>>Admin</option>
+                                </select>
+
+                                <div class="text-gray-500 text-sm"><%= user.created_at %></div>
+
+                                <label class="flex items-center gap-2 text-sm">
+                                    <input type="checkbox" name="hidden" value="1" class="w-6 h-6 bg-gray-700 rounded-md peer-checked:bg-blue-600 peer-checked:border-blue-600 border-2 border-gray-500" <%= user.hidden ? 'checked' : '' %> />
+                                    Скрыт
+                                </label>
+
+                                <button class="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 cursor-pointer">💾</button>
+                            </form>
+                            <form action="/admin/user/delete/<%= user.id %>" method="POST" onsubmit="return confirm('Удалить пользователя?')">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button class="bg-red-500 text-lg px-3 py-2 rounded hover:bg-red-600 cursor-pointer">🗑️</button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- Раздел с проектами -->
+        <div id="tab-projects" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row gap-2 justify-start h-10">
+                <input type="text" id="projectSearchInput" placeholder="Поиск пользователей..."
+                       class="border px-3 py-2 rounded w-64" />
+            </div>
+
+            <div id="projectList" class="space-y-6">
+                <% projects.forEach(project => { %>
+                    <div class="bg-white shadow-lg rounded-lg p-4 mb-4 space-y-2 project-card">
+                        <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-[2rem_auto_1fr_auto_1fr_auto_auto] gap-3 items-center">
+                            <form action="/admin/project/update/<%= project.id %>" method="POST" class="contents">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div class="text-gray-600 font-mono">#<%= project.id %></div>
+                                <input name="title" value="<%= project.title %>" class="border p-2 rounded w-52" placeholder="Название" />
+                                <input name="description" value="<%= project.description %>" class="border p-2 rounded w-full" placeholder="Описание" />
+                                <div class="text-gray-500 text-sm">Автор ID: <%= project.user_id %></div>
+                                <div class="text-gray-500 text-sm"><%= project.created_at %></div>
+                                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer">💾</button>
+                            </form>
+                            <form action="/admin/project/delete/<%= project.id %>" method="POST" onsubmit="return confirm('Удалить проект?')">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button class="bg-red-500 text-lg px-3 py-2 rounded hover:bg-red-600 cursor-pointer">🗑️</button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- Раздел с логами -->
+        <div id="tab-logs" class="tab-content hidden">
+            <form method="GET" action="/admin" class="mb-4 flex flex-wrap gap-2 items-center text-sm">
+                <select name="user_id" class="border rounded p-1">
+                    <option value="">Все админы</option>
+                    <% admins.forEach(admin => { %>
+                        <option value="<%= admin.id %>" <%= +admin.id === +query.user_id ? 'selected' : '' %>><%= admin.name %></option>
+                    <% }) %>
+                </select>
+
+                <select name="action_type" class="border rounded p-1">
+                    <option value="">Все действия</option>
+                    <option value="create" <%= query.action_type === 'create' ? 'selected' : '' %>>Создание</option>
+                    <option value="update" <%= query.action_type === 'update' ? 'selected' : '' %>>Обновление</option>
+                    <option value="delete" <%= query.action_type === 'delete' ? 'selected' : '' %>>Удаление</option>
+                </select>
+
+                <label class="text-gray-600">С:
+                    <input type="date" name="date_from" value="<%= query.date_from || '' %>" class="border rounded p-1 ml-1" />
+                </label>
+
+                <label class="text-gray-600 ml-2">По:
+                    <input type="date" name="date_to" value="<%= query.date_to || '' %>" class="border rounded p-1 ml-1" />
+                </label>
+            </form>
+
+            <div class="bg-white p-6 rounded shadow-lg max-h-[700px] overflow-y-auto text-sm text-gray-700 space-y-2">
+                <% logs.forEach(log => { %>
+                    <div class="border-b py-2">
+                        <span class="text-gray-500"><%=
+                                new Date(new Date(log.timestamp).getTime() + 3 * 60 * 60 * 1000).toLocaleString()
+                            %></span> —
+                        <strong><%= log.username || 'System' %></strong>: <%= log.action %>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <!-- Таблица с командой -->
+        <div id="tab-team" class="tab-content hidden grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
+            <div id="admin-chat" class="bg-white rounded-lg p-6 shadow-lg flex flex-col h-[500px] overflow-hidden w-full">
+                <h2 class="text-xl font-semibold mb-4">Админский чат</h2>
+                <div id="chat-messages" data-current-user="<%= currentUser.id %>" class="flex-1 overflow-y-auto space-y-4 pr-2">
+                    <% messages.forEach(message => { %>
+                        <div class="flex <%= message.user_id === currentUser.id ? 'justify-end' : 'justify-start' %>">
+                            <div class="max-w-[70%] mb-3 p-3 rounded-lg shadow-md relative <%= message.user_id === currentUser.id ? 'bg-blue-100' : 'bg-gray-100' %>">
+                                <div class="flex items-center justify-between mb-1 gap-3">
+                                    <div class="flex items-center gap-2">
+                                        <img src="<%= message.avatar || '/uploads/default-avatar-hq.png' %>" class="w-6 h-6 rounded-full">
+                                        <span class="font-semibold text-sm"><%= message.username %></span>
+                                    </div>
+                                    <% if (message.user_id === currentUser.id) { %>
+                                        <div class="flex gap-2 text-xs text-blue-500">
+                                            <button type="button" onclick="openEditModal(<%= message.id %>, `<%- message.text.replace(/`/g, '\\`') %>`)">✏️</button>
+                                            <form action="/admin/chat/delete/<%= message.id %>" method="POST" onsubmit="return confirm('Удалить сообщение?')">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit">🗑️</button>
+                                            </form>
+                                        </div>
+                                    <% } %>
+                                </div>
+                                <p class="text-sm" name="text">
+                                    <%= message.text %>
+                                    <% if (message.edited) { %><span class="text-xs text-gray-500 ml-2">(изменено)</span><% } %>
+                                </p>
+
+                                <p class="text-xs text-gray-500 mt-1 text-right">
+                                    <%= new Date(message.created_at).toLocaleString('ru-RU', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        day: '2-digit',
+                                        month: 'short'
+                                    }) %>
+                                </p>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <form id="chat-form" action="/admin/chat/send" method="POST" class="mt-4 flex gap-3">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input name="text" id="chat-input" required class="border rounded px-3 py-2 flex-1" placeholder="Введите сообщение..." autocomplete="off">
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded cursor-pointer hover:bg-blue-600">📤</button>
+                </form>
+            </div>
+
+            <div id="todo-section" class="bg-white rounded-lg p-6 shadow-lg space-y-4 w-full">
+                <h2 class="text-xl font-bold text-gray-800">To-Do List</h2>
+
+                <form action="/admin/todo/create" method="POST" class="flex gap-3">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input name="text" required class="border rounded px-3 py-2 flex-1" placeholder="Новая задача">
+                    <button class="bg-green-500 text-white px-4 py-2 cursor-pointer rounded hover:bg-green-600">➕</button>
+                </form>
+
+                <ul id="todo-list" class="space-y-2">
+                    <% if (todos.length === 0) { %>
+                        <p class="text-gray-500">Нет задач</p>
+                    <% } else { %>
+                        <% todos.forEach((todo, index) => { %>
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white p-3 rounded shadow mb-2 gap-2">
+                                <div class="flex flex-wrap gap-2 sm:flex-nowrap sm:space-x-2 overflow-x-auto">
+                                    <form action="/admin/todo/toggle/<%= todo.id %>" method="POST">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button class="cursor-pointer"><%= todo.completed ? '✅' : '⬜' %></button>
+                                    </form>
+                                    <div class="task-text-area flex items-center gap-3">
+                                        <span class="task-text <%= todo.completed ? 'line-through text-gray-400' : '' %>"><%= todo.text %></span>
+
+                                        <form action="/admin/todo/update/<%= todo.id %>" method="POST" class="task-edit-form hidden flex items-center gap-2" onsubmit="return validateEditForm(this)">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input name="text" value="<%= todo.text %>" class="border px-2 py-1 rounded w-60">
+                                            <button class="text-sm px-2 py-1 bg-blue-500 text-white rounded whitespace-nowrap">💾</button>
+                                        </form>
+
+                                        <button type="button" class="edit-btn cursor-pointer" onclick="toggleEditForm(this)">✏️</button>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-2">
+                                    <form action="/admin/todo/assign" method="POST" class="relative inline-block w-48">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="todo_id" value="<%= todo.id %>">
+
+                                        <div class="relative">
+                                            <button type="button" onclick="toggleDropdown(this)" class="w-full cursor-pointer bg-white border border-gray-300 rounded px-2 py-1 text-sm text-left shadow-sm focus:outline-none">
+                                                👥 Назначить админа(-ов)
+                                            </button>
+
+                                            <div class="dropdown hidden absolute z-10 mt-1 bg-white border border-gray-300 rounded shadow-md max-h-48 overflow-y-auto w-full">
+                                                <% admins.forEach(admin => { %>
+                                                    <label class="flex items-center px-2 py-1 hover:bg-gray-100 cursor-pointer text-sm">
+                                                        <input type="checkbox" name="user_ids" value="<%= admin.id %>" class="mr-2"
+                                                                <%= (todoAdminsMap[todo.id] || []).includes(admin.id) ? 'checked' : '' %> >
+                                                        <%= admin.name %>
+                                                    </label>
+                                                <% }) %>
+                                                <div class="p-2 border-t text-right">
+                                                    <button type="submit" class="bg-blue-500 cursor-pointer text-white px-3 py-1 text-sm rounded hover:bg-blue-600">💾 Сохранить</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <form action="/admin/todo/move" method="POST" class="inline">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="id" value="<%= todo.id %>">
+                                        <input type="hidden" name="direction" value="up">
+                                        <button class="cursor-pointer" <%= index === 0 ? 'disabled' : '' %>>⬆️</button>
+                                    </form>
+                                    <form action="/admin/todo/move" method="POST" class="inline">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="id" value="<%= todo.id %>">
+                                        <input type="hidden" name="direction" value="down">
+                                        <button class="cursor-pointer" <%= index === todos.length - 1 ? 'disabled' : '' %>>⬇️</button>
+                                    </form>
+                                    <form action="/admin/todo/delete/<%= todo.id %>" method="POST" onsubmit="return confirm('Удалить задачу?')">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button class="text-red-500 cursor-pointer">🗑️</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <% }) %>
+                    <% } %>
+                </ul>
+            </div>
+
+            <div id="admin-task-view" class="bg-white rounded-lg p-6 shadow-lg space-y-4 w-full">
+                <h2 class="text-xl font-semibold">Задачи по администраторам</h2>
+                <% admins.forEach(admin => { %>
+                    <div class="border rounded p-2 border-gray-300">
+                        <div class="flex items-center justify-between cursor-pointer" onclick="toggleTasks('<%= admin.id %>')">
+                            <div class="flex items-center gap-3">
+                                <img src="<%= admin.avatar || '/uploads/default-avatar-hq.png' %>" alt="avatar" class="w-10 h-10 rounded-full">
+                                <span class="font-semibold"><%= admin.name %></span>
+                            </div>
+                            <span class="text-gray-400 text-sm">▼</span>
+                        </div>
+                        <ul id="tasks-for-<%= admin.id %>" class="ml-12 mt-3 hidden list-disc text-gray-700">
+                            <% (adminTodoMap[admin.id] || []).forEach(task => { %>
+                                <li><%= task.text %> <% if (task.completed) { %><span class="text-green-500">(выполнено)</span><% } %></li>
+                            <% }) %>
+                            <% if (!(adminTodoMap[admin.id] || []).length) { %>
+                                <li class="text-gray-400 italic">Нет задач</li>
+                            <% } %>
+                        </ul>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Модальное окно -->
+<div id="userModal" class="fixed inset-0 items-center justify-center z-50 hidden bg-black/50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+        <button onclick="closeUserModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl font-bold">×</button>
+        <h2 class="text-xl font-semibold mb-4">Создание нового пользователя</h2>
+
+        <form action="/admin/user/create" method="POST" class="space-y-3">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="text" name="name" placeholder="Имя" required class="border p-2 w-full rounded">
+            <input type="email" name="email" placeholder="Email" required class="border p-2 w-full rounded">
+            <input type="password" name="password" placeholder="Пароль" required class="border p-2 w-full rounded">
+            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Создать</button>
+        </form>
+    </div>
+</div>
+
+<div id="edit-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background-color: rgba(0, 0, 0, 0.5);">
+    <form id="edit-form" method="POST" class="bg-white p-6 rounded shadow-lg w-full max-w-md">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <textarea name="text" required class="w-full border rounded p-2 mb-4"></textarea>
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="closeEditModal()" class="text-gray-500">Отмена</button>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Сохранить</button>
+        </div>
+    </form>
+</div>
+
+<script src="/adminHandling.js"></script>
+</body>
+</html>

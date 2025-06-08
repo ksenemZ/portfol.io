@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Вход</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+<div class="bg-white p-8 rounded shadow-md w-96">
+    <h2 class="text-2xl font-bold mb-4">Вход</h2>
+    <% if (error) { %>
+        <p class="text-red-500"><%= error %></p>
+    <% } %>
+    <form action="/login" method="post">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="text" name="identifier" placeholder="Email или имя пользователя" required class="border p-2 w-full mb-2">
+        <input type="password" name="password" placeholder="Пароль" required class="border p-2 w-full mb-2">
+
+        <!-- reCAPTCHA -->
+        <div class="g-recaptcha mb-4" data-sitekey="6Lev1lYrAAAAAP1QeoLnbwHLlbMOsTreQ1ieQs9v"></div>
+
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 w-full">Войти</button>
+    </form>
+    <p class="mt-4">Забыли пароль? <a href="/forgot" class="text-blue-500">Восстановить</a></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Редактирование профиля</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+</head>
+<body class="bg-gray-100 flex justify-center items-center">
+<div class="max-w-md w-full bg-white mt-10 mb-10 p-6 rounded shadow-md">
+    <% if (typeof error !== 'undefined') { %>
+        <p class="text-red-500 text-sm font-medium"><%= error %></p>
+    <% } %>
+
+    <h2 class="text-2xl font-bold mb-4">Редактировать профиль</h2>
+
+
+    <form action="/profile/<%= user.id %>/edit/?_csrf=<%=csrfToken%>" method="POST" enctype="multipart/form-data" class="space-y-4">
+        <div>
+            <label class="block text-sm font-medium">Имя:</label>
+            <input type="text" name="name" value="<%= user.name %>" class="w-full p-2 border rounded" maxlength="50" required>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">Электронная почта:</label>
+            <input type="email" name="email" value="<%= user.email %>" class="w-full p-2 border rounded" maxlength="255" required>
+            <% if (!user.email_verified) { %>
+                <p class="text-xs text-red-500 mt-1">Почта не подтверждена</p>
+            <% } else { %>
+                <p class="text-xs text-green-600 mt-1">Почта подтверждена</p>
+            <% } %>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">О себе:</label>
+            <textarea id="input" name="bio" class="w-full p-2 border rounded" maxlength="1000"><%= user.bio %></textarea>
+            <span id="char-count" class="text-xs text-gray-500">0 / 1000</span>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">GitHub:</label>
+            <input type="url" name="github" value="<%= user.github %>" class="w-full p-2 border rounded">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">Telegram:</label>
+            <input type="url" name="telegram" value="<%= user.telegram %>" class="w-full p-2 border rounded">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">LinkedIn:</label>
+            <input type="url" name="linkedin" value="<%= user.linkedin %>" class="w-full p-2 border rounded">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">Аватар:</label>
+            <div class="col-span-full">
+                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-5">
+                    <div class="text-center">
+                        <div class="mt-4 flex text-sm/6 text-gray-600">
+                            <label for="file-upload-1" class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 focus-within:outline-hidden hover:text-indigo-500">
+                                <span>Загрузить изображение</span>
+                                <input id="file-upload-1" name="avatar" type="file" class="sr-only" accept="image/png, image/jpeg, image/webp" onchange="checkFileSize(this)">
+                            </label>
+                        </div>
+                        <p class="text-xs/5 text-gray-600">PNG, JPG, WEBP</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium">Обложка профиля:</label>
+            <div class="col-span-full">
+                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-5">
+                    <div class="text-center">
+                        <div class="mt-4 flex text-sm/6 text-gray-600">
+                            <label for="file-upload-2" class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 focus-within:outline-hidden hover:text-indigo-500">
+                                <span>Загрузить изображение</span>
+                                <input id="file-upload-2" name="cover" type="file" class="sr-only" accept="image/png, image/jpeg, image/webp" onchange="checkFileSize(this)">
+                            </label>
+                        </div>
+                        <p class="text-xs/5 text-gray-600">PNG, JPG, WEBP</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="bg-purple-700 text-white px-4 py-2 rounded w-full"><a href="/profile/<%= user.id %>/change-password">Смена пароля</a></button>
+
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Сохранить</button>
+    </form>
+
+    <a href="/profile/<%= user.id %>" class="block text-center text-blue-500 mt-4">Назад в профиль</a>
+</div>
+
+<script src="/checkFileSize.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const textarea = document.getElementById('input');
+        textarea.value = textarea.value.replace(/^\s+/, '');
+        const counter = document.getElementById('char-count');
+
+        if (textarea && counter) {
+            textarea.addEventListener('input', () => {
+                const length = textarea.value.length;
+                counter.textContent = `${length} / 1000`;
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <title>Редактирование проекта</title>
+    <style>
+        .canvas-area {
+            position: relative;
+            min-height: 600px;
+            min-width: 800px;
+            border: 2px dashed #ccc;
+            background: #fff;
+        }
+    </style>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+</head>
+
+<script>
+    if (window.innerWidth < 1145) {
+        window.location.href = "/unsupported-screen";
+    }
+</script>
+<body class="flex h-screen overflow-hidden bg-gray-100">
+<!-- Левая панель -->
+<aside class="w-1/5 bg-white border-r p-4 space-y-2 flex flex-col items-start overflow-auto">
+    <div class="flex flex-col justify-between space-x-5 border-b w-full">
+        <h2 class="font-bold mb-2">Добавить элемент</h2>
+        <button onclick="addElement('text')" class="btn w-full text-left hover:bg-gray-100 p-2 rounded">Текст</button>
+        <button onclick="addElement('link')" class="btn w-full text-left hover:bg-gray-100 p-2 rounded">Ссылка</button>
+        <button onclick="addElement('divider')" class="btn w-full text-left hover:bg-gray-100 p-2 rounded">Разделитель</button>
+        <button onclick="addElement('polygon')" class="btn w-full text-left hover:bg-gray-100 p-2 rounded">Многоугольник</button>
+
+        <form id="uploadForm" class="mt-4" enctype="multipart/form-data">
+            <div class="col-span-full">
+                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-5">
+                    <div class="text-center">
+                        <div class="mt-4 flex text-sm/6 text-gray-600">
+                            <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 focus-within:outline-hidden hover:text-indigo-500">
+                                <span>Загрузить изображение</span>
+                                <input id="file-upload" name="image" type="file" class="sr-only" accept="image/png, image/jpeg, image/webp" onchange="checkFileSize(this)">
+                            </label>
+                        </div>
+                        <p class="text-xs/5 text-gray-600">PNG, JPG, WEBP</p>
+                    </div>
+                </div>
+            </div>
+            <button class="bg-amber-500 text-white px-4 py-1 rounded flex w-max mt-2 hover:bg-amber-600 mb-2" type="submit">Загрузить</button>
+        </form>
+    </div>
+
+    <div class="font-bold mb-2 mt-10">Древо объектов</div>
+    <ul id="objectTree" class="border-y overflow-auto px-2 py-1 text-sm space-y-1 w-full max-h-[300px]"></ul>
+
+    <button class="bg-green-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-green-600" onclick="saveCanvas()">Сохранить</button>
+
+    <button class="bg-red-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-red-600" onclick="exportCanvasToPDF()">Экспортировать в PDF</button>
+
+<button class="bg-blue-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-blue-600"><a href="/profile/<%= user.id %>">Вернуться в профиль</a></button>
+</aside>
+
+<!-- Холст -->
+<main class="flex-1 p-6 overflow-auto">
+    <div id="canvas" class="canvas-area bg-white p-4 rounded-lg space-y-4 relative min-h-[600px]"></div>
+</main>
+
+<!-- Правая панель -->
+<aside class="overflow-x-scroll w-1/5 bg-white border-l p-4" id="propertiesPanel">
+    <h2 class="font-bold mb-2">Свойства</h2>
+    <div id="propertiesContent">Выберите элемент</div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="/pdfExport.js"></script>
+<script src="/editor.js"></script>
+<script src="/checkFileSize.js"></script>
+</body>
+</html>

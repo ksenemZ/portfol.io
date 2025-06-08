@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Изменение проекта</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+<div class="max-w-md w-full bg-white p-6 rounded shadow-md">
+    <h2 class="text-2xl font-bold mb-4">Редактировать проект</h2>
+
+    <form action="/projects/edit/<%= project.id %>/?_csrf=<%=csrfToken%>" method="POST" class="space-y-4" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div>
+            <label class="block text-sm font-medium">Название проекта:</label>
+            <input type="text" name="title" value="<%= project.title %>" class="w-full p-2 border rounded" maxlength="50" required>
+        </div>
+        <div>
+            <label class="block text-sm font-medium">Описание:</label>
+            <textarea id="input" name="description" class="w-full p-2 border rounded" maxlength="1000"><%= project.description %></textarea>
+            <span id="char-count" class="text-xs text-gray-500">0 / 1000</span>
+        </div>
+        <div>
+            <label class="block text-sm font-medium">Ссылка на проект:</label>
+            <input type="url" name="link" value="<%= project.link %>" class="w-full p-2 border rounded">
+        </div>
+        <div>
+            <label class="block text-sm font-medium">Обложка:</label>
+            <div class="col-span-full">
+                <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-5">
+                    <div class="text-center">
+                        <div class="mt-4 flex text-sm/6 text-gray-600">
+                            <label for="file-upload" class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 focus-within:outline-hidden hover:text-indigo-500">
+                                <span>Загрузить изображение</span>
+                                <input id="file-upload" name="cover" type="file" value="<%= project.cover || '' %>" class="sr-only" accept="image/png, image/jpeg, image/webp" onchange="checkFileSize(this)">
+                            </label>
+                        </div>
+                        <p class="text-xs/5 text-gray-600">PNG, JPG, WEBP</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded w-full">Сохранить</button>
+    </form>
+
+    <a href="/profile/<%= user.id %>" class="block text-center text-blue-500 mt-4">Назад в профиль</a>
+</div>
+
+<script src="/checkFileSize"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const textarea = document.getElementById('input');
+        textarea.value = textarea.value.replace(/^\s+/, '');
+        const counter = document.getElementById('char-count');
+
+        if (textarea && counter) {
+            textarea.addEventListener('input', () => {
+                const length = textarea.value.length;
+                counter.textContent = `${length} / 1000`;
+            });
+        }
+    });
+</script>
+</body>
+</html>

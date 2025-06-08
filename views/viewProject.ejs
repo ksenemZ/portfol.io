@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru" class="m-0, p-0, h-full, bg-gray-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр проекта</title>
+    <link href="/css/output.css" rel="stylesheet">
+    <link rel="icon" href="/uploads/LOGO.png" type="image/x-icon">
+    <meta name="csrf-token" content="<%= csrfToken %>">
+    <style>
+        #canvas {
+            min-width: 800px;
+            min-height: 600px;
+        }
+    </style>
+</head>
+<body class="m-0, p-0, h-full, bg-gray-200">  <%- include('partials/nav') %>
+
+<main class="w-full flex flex-col h-fit mt-2">
+    <div class="flex w-full items-center justify-center">
+        <% if (project.layout) { %>
+        <div class="w-full h-fit flex overflow-auto">
+            <div id="canvas" class="relative bg-white bg-cover bg-no-repeat"></div>
+        </div>
+
+        <% } else { %>
+            <div>Упс... Похоже, что у этого проекта пока отсутствует страница. Попробуйте зайти позже.</div>
+        <% } %>
+    </div>
+    <div class="p-4 space-y-2 flex flex-col sm:flex-row items-start justify-between">
+        <% if (project.layout) { %>
+            <button class="bg-red-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-red-600" onclick="exportCanvasToPDF()">Экспортировать в PDF</button>
+        <% } %>
+        <% if (user) { %>
+            <button id="likeBtn" class="bg-green-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-green-600">❤️ Понравилось</button>
+        <% } %>
+        <% if (user) { %>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-blue-600"><a href="/profile/<%= user.id %>">Вернуться в профиль</a></button>
+        <% } else { %>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded flex w-max mt-2 hover:bg-blue-600"><a href="/">Вернуться на главную</a></button>
+        <% } %>
+    </div>
+    <span class="text-sm text-gray-600 mt-1 block">Оценок: <%= project.popularity || 0 %></span>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="/editor.js"></script>
+<script src="/pdfExport.js"></script>
+<script>
+    window.makeDraggable = () => {};
+    window.selectElement = () => {};
+    window.updateObjectTree = () => {};
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadCanvas().then(() => {
+            const allElements = document.querySelectorAll('#canvas [contenteditable]');
+            allElements.forEach(el => el.contentEditable = false);
+        });
+
+        const likeBtn = document.getElementById('likeBtn');
+
+        if (likeBtn) {
+            likeBtn.addEventListener('click', () => {
+                fetch(`/project/<%= project.id %>/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'CSRF-Token': csrfToken
+                    }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            likeBtn.textContent = '✅ Спасибо за оценку!';
+                            likeBtn.disabled = true;
+                            likeBtn.classList.remove('bg-green-500');
+                            likeBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                        } else {
+                            alert(data.error || 'Ошибка при попытке поставить лайк');
+                        }
+                    });
+            });
+        }
+    });
+</script>
+</body>
+</html>
